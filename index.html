@@ -1,112 +1,346 @@
-// TikTok Account Manager
-let accounts = JSON.parse(localStorage.getItem('tiktokAccounts')) || [
-    {
-        id: 1,
-        username: "@danceking123",
-        email: "account1@gmail.com",
-        followers: "15.2K",
-        likes: "245K",
-        videos: 47,
-        profilePic: "https://api.dicebear.com/7.x/avataaars/svg?seed=danceking"
-    }
-];
-
-function saveToLocalStorage() {
-    localStorage.setItem('tiktokAccounts', JSON.stringify(accounts));
-}
-
-function displayAccounts() {
-    const container = document.getElementById('accountsContainer');
-    container.innerHTML = '';
-    
-    accounts.forEach(account => {
-        const accountCard = document.createElement('div');
-        accountCard.className = 'account-card';
-        accountCard.innerHTML = `
-            <img src="${account.profilePic}" class="profile-img" alt="Profile">
-            <div class="username">${account.username}</div>
-            <div style="font-size: 0.9rem; opacity: 0.8;">${account.email}</div>
-            
-            <div class="stats">
-                <div class="stat">
-                    <span class="stat-number">${account.followers}</span>
-                    <span class="stat-label">Followers</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">${account.likes}</span>
-                    <span class="stat-label">Likes</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">${account.videos}</span>
-                    <span class="stat-label">Videos</span>
-                </div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TikTok Multi-Manager</title>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #000000, #ff0050);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(255, 0, 80, 0.5);
+        }
+        
+        .subtitle {
+            opacity: 0.8;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .account-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s;
+        }
+        
+        .account-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .profile-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #ff0050;
+            margin-bottom: 15px;
+        }
+        
+        .username {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+            color: #ff0050;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 10px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .btn {
+            background: #ff0050;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #ff3366;
+        }
+        
+        .add-account-section {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            margin-top: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .warning {
+            background: rgba(255, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid red;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 TikTok Multi-Account Manager</h1>
+            <p class="subtitle">Manage all your TikTok accounts from one place</p>
+        </header>
+        
+        <div class="dashboard" id="accountsContainer">
+            <!-- Accounts will be loaded here -->
+        </div>
+        
+        <div class="add-account-section">
+            <h2>➕ Add New TikTok Account</h2>
+            <div class="input-group">
+                <label>Email/Gmail:</label>
+                <input type="email" id="newEmail" placeholder="newaccount@gmail.com">
             </div>
+            <div class="input-group">
+                <label>Password:</label>
+                <input type="password" id="newPassword" placeholder="••••••••">
+            </div>
+            <div class="input-group">
+                <label>Username:</label>
+                <input type="text" id="newUsername" placeholder="tiktok_username">
+            </div>
+            <button class="btn" onclick="createNewAccount()">Create New Account</button>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> This is a demonstration tool. 
+            We do not store your passwords. Use at your own risk.
+        </div>
+    </div>
+
+    <script>
+        // Sample accounts data (in real app, this would come from backend)
+        let accounts = [
+            {
+                id: 1,
+                username: "@danceking123",
+                email: "account1@gmail.com",
+                followers: "15.2K",
+                likes: "245K",
+                videos: 47,
+                profilePic: "https://randomuser.me/api/portraits/men/1.jpg"
+            },
+            {
+                id: 2,
+                username: "@comedyqueen",
+                email: "account2@gmail.com",
+                followers: "32.7K",
+                likes: "512K",
+                videos: 89,
+                profilePic: "https://randomuser.me/api/portraits/women/2.jpg"
+            },
+            {
+                id: 3,
+                username: "@cookingmagic",
+                email: "account3@gmail.com",
+                followers: "8.9K",
+                likes: "98K",
+                videos: 34,
+                profilePic: "https://randomuser.me/api/portraits/men/3.jpg"
+            }
+        ];
+
+        // Function to display accounts
+        function displayAccounts() {
+            const container = document.getElementById('accountsContainer');
+            container.innerHTML = '';
             
-            <button class="btn" onclick="openTikTok('${account.username}')">
-                🚀 Open TikTok
-            </button>
-            <button class="btn" onclick="removeAccount(${account.id})" 
-                    style="background: rgba(255,0,0,0.3);">
-                ❌ Remove
-            </button>
-        `;
-        container.appendChild(accountCard);
-    });
-}
+            accounts.forEach(account => {
+                const accountCard = document.createElement('div');
+                accountCard.className = 'account-card';
+                accountCard.innerHTML = `
+                    <img src="${account.profilePic}" class="profile-img" alt="Profile">
+                    <div class="username">${account.username}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">${account.email}</div>
+                    
+                    <div class="stats">
+                        <div class="stat">
+                            <span class="stat-number">${account.followers}</span>
+                            <span class="stat-label">Followers</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">${account.likes}</span>
+                            <span class="stat-label">Likes</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">${account.videos}</span>
+                            <span class="stat-label">Videos</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" onclick="openTikTokAccount('${account.username}')">
+                        🚀 Open TikTok
+                    </button>
+                    <button class="btn" onclick="deleteAccount(${account.id})" 
+                            style="background: rgba(255,0,0,0.3);">
+                        ❌ Remove
+                    </button>
+                `;
+                container.appendChild(accountCard);
+            });
+        }
 
-function openTikTok(username) {
-    const cleanUsername = username.replace('@', '');
-    const tiktokUrl = `https://www.tiktok.com/@${cleanUsername}`;
-    window.open(tiktokUrl, '_blank');
-}
+        // Function to open real TikTok
+        function openTikTokAccount(username) {
+            // Convert username to TikTok URL
+            const cleanUsername = username.replace('@', '');
+            const tiktokUrl = `https://www.tiktok.com/${cleanUsername}`;
+            
+            // Open TikTok in new tab
+            window.open(tiktokUrl, '_blank');
+            
+            // Show notification
+            alert(`Opening TikTok account: ${username}\nURL: ${tiktokUrl}`);
+        }
 
-function createNewAccount() {
-    const email = document.getElementById('newEmail').value;
-    const username = document.getElementById('newUsername').value;
-    
-    if (!email || !username) {
-        alert("Email aur Username zaroori hai!");
-        return;
-    }
-    
-    const newAccount = {
-        id: Date.now(),
-        username: username.startsWith('@') ? username : `@${username}`,
-        email: email,
-        followers: "0",
-        likes: "0",
-        videos: "0",
-        profilePic: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
-    };
-    
-    accounts.push(newAccount);
-    saveToLocalStorage();
-    displayAccounts();
-    
-    // Clear form
-    document.getElementById('newEmail').value = '';
-    document.getElementById('newUsername').value = '';
-    
-    // Open TikTok signup
-    window.open('https://www.tiktok.com/signup', '_blank');
-}
+        // Function to create new account
+        function createNewAccount() {
+            const email = document.getElementById('newEmail').value;
+            const password = document.getElementById('newPassword').value;
+            const username = document.getElementById('newUsername').value;
+            
+            if (!email || !password || !username) {
+                alert("Please fill all fields!");
+                return;
+            }
+            
+            // Create new account object
+            const newAccount = {
+                id: accounts.length + 1,
+                username: `@${username}`,
+                email: email,
+                followers: "0",
+                likes: "0",
+                videos: "0",
+                profilePic: `https://randomuser.me/api/portraits/${accounts.length % 2 === 0 ? 'men' : 'women'}/${accounts.length + 1}.jpg`
+            };
+            
+            // Add to accounts array
+            accounts.push(newAccount);
+            
+            // Update display
+            displayAccounts();
+            
+            // Clear form
+            document.getElementById('newEmail').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newUsername').value = '';
+            
+            alert(`✅ New account created!\nUsername: @${username}\n\nNote: This is a DEMO. To create REAL TikTok account, go to TikTok.com`);
+            
+            // Open TikTok signup page
+            window.open('https://www.tiktok.com/signup', '_blank');
+        }
 
-function removeAccount(id) {
-    if (confirm("Kya aap ye account remove karna chahte hain?")) {
-        accounts = accounts.filter(acc => acc.id !== id);
-        saveToLocalStorage();
-        displayAccounts();
-    }
-}
+        // Function to delete account
+        function deleteAccount(id) {
+            if (confirm("Are you sure you want to remove this account from dashboard?")) {
+                accounts = accounts.filter(account => account.id !== id);
+                displayAccounts();
+                alert("Account removed from dashboard!");
+            }
+        }
 
-function openAllAccounts() {
-    accounts.forEach(account => {
-        const cleanUsername = account.username.replace('@', '');
-        window.open(`https://www.tiktok.com/@${cleanUsername}`, '_blank');
-    });
-}
+        // Function to open ALL TikTok accounts at once
+        function openAllAccounts() {
+            accounts.forEach(account => {
+                const cleanUsername = account.username.replace('@', '');
+                setTimeout(() => {
+                    window.open(`https://www.tiktok.com/${cleanUsername}`, '_blank');
+                }, 500);
+            });
+            alert(`Opening all ${accounts.length} accounts in new tabs!`);
+        }
 
-// Initialize
-window.onload = function() {
-    displayAccounts();
-};
+        // Add "Open All" button
+        window.onload = function() {
+            const header = document.querySelector('header');
+            const openAllBtn = document.createElement('button');
+            openAllBtn.className = 'btn';
+            openAllBtn.innerHTML = '📂 Open All Accounts';
+            openAllBtn.style.marginTop = '10px';
+            openAllBtn.onclick = openAllAccounts;
+            header.appendChild(openAllBtn);
+            
+            displayAccounts();
+        };
+    </script>
+</body>
+</html>
